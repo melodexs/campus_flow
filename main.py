@@ -30,6 +30,21 @@ def list_tickets(tickets):
         display_ticket(ticket)
 
 
+def view_ticket(tickets):
+    """Display one ticket by ID."""
+    try:
+        ticket_id = int(input("Ticket ID: "))
+    except ValueError:
+        print("\nError: Ticket ID must be a number.")
+        return
+
+    ticket = find_ticket(tickets, ticket_id)
+    if ticket is None:
+        print("Ticket not found.")
+        return
+    display_ticket(ticket)
+
+
 def create_new_ticket(tickets):
     """Collect ticket details and create a ticket."""
     try:
@@ -162,10 +177,11 @@ def display_menu():
     print("\n====== CampusFlow Ticket Manager ======")
     print("1. Create ticket")
     print("2. List all tickets")
-    print("3. View work queue")
-    print("4. Assign ticket")
-    print("5. Update ticket status")
-    print("6. View reports")
+    print("3. View ticket by ID")
+    print("4. View work queue")
+    print("5. Assign ticket")
+    print("6. Update ticket status")
+    print("7. View reports")
     print("0. Exit")
 
 
@@ -180,26 +196,32 @@ def main():
     print(f"Loaded {len(tickets)} ticket(s).")
 
     while True:
-        display_menu()
-        choice = input("Choose an option: ").strip()
+        try:
+            display_menu()
+            choice = input("Choose an option: ").strip()
 
-        if choice == "1":
-            create_new_ticket(tickets)
-        elif choice == "2":
-            list_tickets(tickets)
-        elif choice == "3":
-            show_work_queue(tickets)
-        elif choice == "4":
-            assign_existing_ticket(tickets)
-        elif choice == "5":
-            change_ticket_status(tickets)
-        elif choice == "6":
-            show_report(tickets)
-        elif choice == "0":
-            print("Goodbye!")
+            if choice == "1":
+                create_new_ticket(tickets)
+            elif choice == "2":
+                list_tickets(tickets)
+            elif choice == "3":
+                view_ticket(tickets)
+            elif choice == "4":
+                show_work_queue(tickets)
+            elif choice == "5":
+                assign_existing_ticket(tickets)
+            elif choice == "6":
+                change_ticket_status(tickets)
+            elif choice == "7":
+                show_report(tickets)
+            elif choice == "0":
+                print("Goodbye!")
+                break
+            else:
+                print("Invalid option. Please choose 0–7.")
+        except (EOFError, KeyboardInterrupt):
+            print("\nGoodbye!")
             break
-        else:
-            print("Invalid option. Please choose 0–6.")
 
 
 if __name__ == "__main__":
