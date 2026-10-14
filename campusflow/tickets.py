@@ -3,6 +3,10 @@ from campusflow.validation import (
     validate_ticket_id,
 )
 
+
+VALID_CATEGORIES = ("Network", "Hardware", "Software", "Other")
+
+
 def calculate_priority(urgency, affected_users):
     """Calculate a ticket's priority from urgency and affected users."""
 
@@ -27,8 +31,6 @@ def calculate_priority(urgency, affected_users):
     return "low"
 
 
-VALID_CATEGORIES = ("Network", "Hardware", "Software", "Other")
-
 def create_ticket(ticket_id, title, category, urgency, affected_users):
     """Validate the details and create a new helpdesk ticket."""
 
@@ -40,29 +42,6 @@ def create_ticket(ticket_id, title, category, urgency, affected_users):
         urgency,
         affected_users,
     )
-
-    priority = calculate_priority(urgency, affected_users)
-
-    return {
-        "id": ticket_id,
-        "title": title.strip(),
-        "category": category,
-        "urgency": urgency,
-        "affected_users": affected_users,
-        "priority": priority,
-        "status": "open",
-        "assigned_to": None,
-        "notes": [],
-    }
-
-    if not isinstance(ticket_id, int) or isinstance(ticket_id, bool) or ticket_id < 1:
-        raise ValueError("Ticket ID must be a positive integer.")
-
-    if not isinstance(title, str) or not title.strip():
-        raise ValueError("Ticket title cannot be empty.")
-
-    if category not in VALID_CATEGORIES:
-        raise ValueError("Category must be Network, Hardware, Software, or Other.")
 
     priority = calculate_priority(urgency, affected_users)
 

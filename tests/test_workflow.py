@@ -21,15 +21,22 @@ class TestTicketAssignment(unittest.TestCase):
 
         self.assertEqual(self.ticket["assigned_to"], "Ada")
 
-    def test_rejects_empty_staff_name(self):
+    def test_rejects_empty_staff_name_without_changing_ticket(self):
+        original_ticket = self.ticket.copy()
+
         with self.assertRaises(ValueError):
             assign_ticket(self.ticket, "   ")
 
-    def test_cannot_assign_resolved_ticket(self):
+        self.assertEqual(self.ticket, original_ticket)
+
+    def test_cannot_assign_resolved_ticket_without_changing_ticket(self):
         self.ticket["status"] = "resolved"
+        original_ticket = self.ticket.copy()
 
         with self.assertRaises(ValueError):
             assign_ticket(self.ticket, "Ada")
+
+        self.assertEqual(self.ticket, original_ticket)
 
 
 class TestTicketWorkflow(unittest.TestCase):
@@ -42,9 +49,13 @@ class TestTicketWorkflow(unittest.TestCase):
     def test_ticket_starts_open(self):
         self.assertEqual(self.ticket["status"], "open")
 
-    def test_cannot_start_unassigned_ticket(self):
+    def test_cannot_start_unassigned_ticket_without_changing_ticket(self):
+        original_ticket = self.ticket.copy()
+
         with self.assertRaises(ValueError):
             update_ticket_status(self.ticket, "in_progress")
+
+        self.assertEqual(self.ticket, original_ticket)
 
     def test_assigned_ticket_can_start_work(self):
         assign_ticket(self.ticket, "Ada")
@@ -60,9 +71,13 @@ class TestTicketWorkflow(unittest.TestCase):
 
         self.assertEqual(self.ticket["status"], "resolved")
 
-    def test_cannot_resolve_ticket_directly_from_open(self):
+    def test_cannot_resolve_ticket_directly_without_changing_ticket(self):
+        original_ticket = self.ticket.copy()
+
         with self.assertRaises(ValueError):
             update_ticket_status(self.ticket, "resolved")
+
+        self.assertEqual(self.ticket, original_ticket)
 
     def test_resolved_ticket_can_be_reopened(self):
         assign_ticket(self.ticket, "Ada")
@@ -73,11 +88,14 @@ class TestTicketWorkflow(unittest.TestCase):
 
         self.assertEqual(self.ticket["status"], "open")
 
-    def test_rejects_invalid_status(self):
+    def test_rejects_invalid_status_without_changing_ticket(self):
+        original_ticket = self.ticket.copy()
+
         with self.assertRaises(ValueError):
             update_ticket_status(self.ticket, "pending")
+
+        self.assertEqual(self.ticket, original_ticket)
 
 
 if __name__ == "__main__":
     unittest.main()
-
