@@ -2,6 +2,9 @@
 
 Data only: no scoring and no input/output lives here. Each question has an
 id, a scenario prompt, four options keyed A-D, and the correct key.
+
+Every scenario matches behaviour that is verified by the test suite, so the
+correct option describes what the application actually does.
 """
 
 QUESTIONS = (
@@ -9,26 +12,29 @@ QUESTIONS = (
         "id": "Q1",
         "prompt": (
             "Ticket 1 is open and unassigned. A user tries to move it to "
-            "in_progress."
+            "in_progress. What should the application do?"
         ),
         "options": {
-            "A": "Accept",
-            "B": "Reject and preserve all data",
-            "C": "Resolve it automatically",
-            "D": "Remove ticket",
+            "A": "Reject it and keep the ticket exactly as it is",
+            "B": "Accept it, then ask for an assignee afterwards",
+            "C": "Reject it, but still change the status to open",
+            "D": "Start it anyway and leave the assignee blank",
         },
-        "correct": "B",
+        "correct": "A",
     },
     {
         "id": "Q2",
-        "prompt": "The app has zero tickets. What should resolution percentage display?",
+        "prompt": (
+            "The app has zero tickets. What should the report's resolution "
+            "percentage display?"
+        ),
         "options": {
-            "A": "Crash",
-            "B": "100%",
-            "C": "0%",
-            "D": "Divide by one without explanation",
+            "A": "Show 100%, since nothing is unresolved",
+            "B": "Show N/A and skip the percentage",
+            "C": "Wait until at least one ticket exists before showing a report",
+            "D": "Show 0%",
         },
-        "correct": "C",
+        "correct": "D",
     },
     {
         "id": "Q3",
@@ -37,8 +43,8 @@ QUESTIONS = (
             "Which records should match?"
         ),
         "options": {
-            "A": "Any record matching one filter",
-            "B": "Only records matching all supplied filters",
+            "A": "Any record matching at least one supplied filter",
+            "B": "Only records matching every supplied filter",
             "C": "All network records",
             "D": "All open records",
         },
@@ -46,21 +52,26 @@ QUESTIONS = (
     },
     {
         "id": "Q4",
-        "prompt": "A resolved ticket receives 'Add note'. What should happen?",
+        "prompt": (
+            "A resolved ticket receives 'Add note'. What should happen?"
+        ),
         "options": {
-            "A": "Append anyway",
-            "B": "Delete old notes",
-            "C": "Reject until reopened",
-            "D": "Change status silently",
+            "A": "Reject it and require the ticket to be reopened first",
+            "B": "Reopen the ticket automatically and add the note",
+            "C": "Accept it, but only if the author is not blank",
+            "D": "Accept it and flag the note for review later",
         },
-        "correct": "C",
+        "correct": "A",
     },
     {
         "id": "Q5",
-        "prompt": "The JSON file includes two tickets with the same ID. What should load do?",
+        "prompt": (
+            "The JSON file includes two tickets with the same ID. "
+            "What should load do?"
+        ),
         "options": {
             "A": "Keep both",
-            "B": "Replace memory with duplicates",
+            "B": "Load them and let later writes overwrite the duplicate",
             "C": "Reject the load without changing current memory",
             "D": "Rename IDs silently",
         },
@@ -69,15 +80,16 @@ QUESTIONS = (
     {
         "id": "Q6",
         "prompt": (
-            "A PR changes validation but has no negative-case tests. "
-            "Best review action?"
+            "Ticket 1 has note N001. A note with only 3 characters is "
+            "rejected, then a valid note is added to the same ticket. "
+            "What ID does the valid note get?"
         ),
         "options": {
-            "A": "Approve because it runs",
-            "B": "Request focused tests and reasoning",
-            "C": "Merge immediately",
-            "D": "Ask AI to approve it",
+            "A": "N003, because the rejected note used N002",
+            "B": "N001, because IDs restart after a rejection",
+            "C": "No ID, because the ticket is locked after a rejection",
+            "D": "N002, because rejected notes do not consume an ID",
         },
-        "correct": "B",
+        "correct": "D",
     },
 )
