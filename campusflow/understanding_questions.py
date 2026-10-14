@@ -17,7 +17,7 @@ QUESTIONS = (
         "options": {
             "A": "Reject it and keep the ticket exactly as it is",
             "B": "Accept it, then ask for an assignee afterwards",
-            "C": "Reject it, but still change the status to open",
+            "C": "Reject it and change the status to resolved",
             "D": "Start it anyway and leave the assignee blank",
         },
         "correct": "A",
@@ -70,10 +70,10 @@ QUESTIONS = (
             "What should load do?"
         ),
         "options": {
-            "A": "Keep both",
+            "A": "Keep the first ticket and silently drop the second",
             "B": "Load them and let later writes overwrite the duplicate",
             "C": "Reject the load without changing current memory",
-            "D": "Rename IDs silently",
+            "D": "Load everything, then renumber the duplicate ticket automatically",
         },
         "correct": "C",
     },
