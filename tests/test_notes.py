@@ -1,7 +1,11 @@
 import copy
+import tempfile
 import unittest
+from pathlib import Path
 
 from campusflow.notes import add_note, get_notes, next_note_id
+from campusflow.storage import load_tickets, save_tickets
+from campusflow.tickets import create_ticket
 
 
 def open_ticket(ticket_id=1, **extra):
@@ -167,6 +171,31 @@ class TestBugHunter(unittest.TestCase):
 
             with self.assertRaises(ValueError):
                 get_notes(tickets, 1)
+
+
+class TestNoteIdsAcrossReload(unittest.TestCase):
+    """Note IDs must continue from the highest existing ID after reload."""
+
+    def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
+        self.filepath = Path(self.temp_dir.name) / "tickets.json"
+
+    def tearDown(self):
+        self.temp_dir.cleanup()
+
+    def test_note_ids_continue_after_save_and_reload(self):
+        tickets = [
+            create_ticket(1, "Wi-Fi problem", "Network", "medium", 2)
+        ]
+
+        add_note(tickets, 1, "Staff A", "Router restarted, monitoring")
+
+        save_tickets(tickets, self.filepath)
+        reloaded = load_tickets(self.filepath)
+
+        note = add_note(reloaded, 1, "Staff A", "Connection looks stable now")
+
+        self.assertEqual(note["note_id"], "N002")
 
 
 if __name__ == "__main__":
