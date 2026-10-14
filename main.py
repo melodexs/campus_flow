@@ -1,11 +1,112 @@
 from campusflow.queue import get_work_queue
 from campusflow.reports import generate_ticket_report
 from campusflow.storage import load_tickets, save_tickets
-from campusflow.tickets import create_ticket, VALID_CATEGORIES
-from campusflow.workflow import assign_ticket, update_ticket_status
+from campusflow.tickets import calculate_priority, create_ticket, VALID_CATEGORIES
+from campusflow.workflow import assign_ticket, update_ticket_status, VALID_STATUSES
 
 
 DATA_FILE = "tickets.json"
+CANCEL_WORD = "back"
+
+
+class CancelledInput(Exception):
+    """Raised when the user types the cancel word at a prompt."""
+
+
+def ask(prompt, parse):
+    """Ask a question until parse() accepts the answer.
+
+    parse is a function that takes the raw input string, raises ValueError
+    with a clear message for bad answers, and returns the cleaned value.
+    EOFError and KeyboardInterrupt are not caught here; main() handles them.
+    """
+    while True:
+        raw = input(f"{prompt} (or '{CANCEL_WORD}' to cancel): ")
+
+        if raw.strip().lower() == CANCEL_WORD:
+            raise CancelledInput()
+
+        try:
+            return parse(raw)
+        except ValueError as error:
+            print(f"Invalid input: {error} Please try again.")
+
+
+def parse_title(raw):
+    """Validate a ticket title."""
+    title = raw.strip()
+
+    if not title:
+        raise ValueError("Ticket title cannot be empty.")
+
+    return title
+
+
+def parse_category(raw):
+    """Validate a category against the library's accepted categories."""
+    category = raw.strip().title()
+
+    if category not in VALID_CATEGORIES:
+        raise ValueError("Category must be Network, Hardware, Software, or Other.")
+
+    return category
+
+
+def parse_urgency(raw):
+    """Validate urgency by reusing the library's own rule."""
+    urgency = raw.strip().lower()
+
+    calculate_priority(urgency, 1)
+
+    return urgency
+
+
+def parse_affected_users(raw):
+    """Validate the affected-users count by reusing the library's rules."""
+    try:
+        affected_users = int(raw.strip())
+    except ValueError:
+        raise ValueError("Affected users must be a whole number.")
+
+    calculate_priority("low", affected_users)
+
+    return affected_users
+
+
+def parse_staff_name(raw):
+    """Validate a staff member's name."""
+    staff_member = raw.strip()
+
+    if not staff_member:
+        raise ValueError("Staff member name cannot be empty.")
+
+    return staff_member
+
+
+def parse_status(raw):
+    """Validate a status against the library's accepted statuses."""
+    status = raw.strip().lower()
+
+    if status not in VALID_STATUSES:
+        raise ValueError("Status must be open, in_progress, or resolved.")
+
+    return status
+
+
+def make_ticket_id_parser(tickets):
+    """Build a parser that accepts a whole number matching a real ticket."""
+    def parse(raw):
+        try:
+            ticket_id = int(raw.strip())
+        except ValueError:
+            raise ValueError("Ticket ID must be a number.")
+
+        if find_ticket(tickets, ticket_id) is None:
+            raise ValueError("Ticket not found.")
+
+        return ticket_id
+
+    return parse
 
 
 def display_ticket(ticket):
@@ -32,34 +133,23 @@ def list_tickets(tickets):
 
 def view_ticket(tickets):
     """Display one ticket by ID."""
-    try:
-        ticket_id = int(input("Ticket ID: "))
-    except ValueError:
-        print("\nError: Ticket ID must be a number.")
-        return
-
+    ticket_id = ask("Ticket ID", make_ticket_id_parser(tickets))
     ticket = find_ticket(tickets, ticket_id)
-    if ticket is None:
-        print("Ticket not found.")
-        return
     display_ticket(ticket)
 
 
 def create_new_ticket(tickets):
     """Collect ticket details and create a ticket."""
+    title = ask("Ticket title", parse_title)
+    category = ask("Category", parse_category)
+    urgency = ask("Urgency", parse_urgency)
+    affected_users = ask("Number of affected users", parse_affected_users)
+
     try:
         ticket_id = max(
             (ticket["id"] for ticket in tickets),
             default=0,
         ) + 1
-
-        title = input("Ticket title: ").strip()
-
-        print("Categories:", ", ".join(VALID_CATEGORIES))
-        category = input("Category: ").strip()
-
-        urgency = input("Urgency (low/medium/high): ").strip().lower()
-        affected_users = int(input("Number of affected users: "))
 
         ticket = create_ticket(
             ticket_id,
@@ -103,15 +193,11 @@ def show_work_queue(tickets):
 
 def assign_existing_ticket(tickets):
     """Assign a ticket to a staff member."""
+    ticket_id = ask("Ticket ID", make_ticket_id_parser(tickets))
+    ticket = find_ticket(tickets, ticket_id)
+    staff_member = ask("Staff member's name", parse_staff_name)
+
     try:
-        ticket_id = int(input("Ticket ID: "))
-        ticket = find_ticket(tickets, ticket_id)
-
-        if ticket is None:
-            print("Ticket not found.")
-            return
-
-        staff_member = input("Staff member's name: ")
         assign_ticket(ticket, staff_member)
         save_tickets(tickets, DATA_FILE)
 
@@ -123,17 +209,11 @@ def assign_existing_ticket(tickets):
 
 def change_ticket_status(tickets):
     """Update the status of an existing ticket."""
+    ticket_id = ask("Ticket ID", make_ticket_id_parser(tickets))
+    ticket = find_ticket(tickets, ticket_id)
+    new_status = ask("New status", parse_status)
+
     try:
-        ticket_id = int(input("Ticket ID: "))
-        ticket = find_ticket(tickets, ticket_id)
-
-        if ticket is None:
-            print("Ticket not found.")
-            return
-
-        print("Available statuses: open, in_progress, resolved")
-        new_status = input("New status: ").strip().lower()
-
         update_ticket_status(ticket, new_status)
         save_tickets(tickets, DATA_FILE)
 
@@ -219,6 +299,8 @@ def main():
                 break
             else:
                 print("Invalid option. Please choose 0–7.")
+        except CancelledInput:
+            print("\nCancelled. Returning to the main menu.")
         except (EOFError, KeyboardInterrupt):
             print("\nGoodbye!")
             break
