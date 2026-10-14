@@ -1,11 +1,28 @@
+from campusflow.notes import add_note, get_notes
 from campusflow.queue import get_work_queue
 from campusflow.reports import generate_ticket_report
+from campusflow.search import (
+    VALID_PRIORITIES,
+    format_ticket_row,
+    normalise_choice,
+    search_tickets,
+    sort_by_priority,
+)
 from campusflow.storage import load_tickets, save_tickets
 from campusflow.tickets import calculate_priority, create_ticket, VALID_CATEGORIES
+from campusflow.understanding_check import (
+    VALID_CHOICES,
+    format_question,
+    is_correct,
+    parse_choice,
+    score_answers,
+)
+from campusflow.understanding_questions import QUESTIONS
 from campusflow.workflow import assign_ticket, update_ticket_status, VALID_STATUSES
 
 
 DATA_FILE = "tickets.json"
+LEARNING_NOTE_FILE = "learning-note.md"
 CANCEL_WORD = "back"
 
 
@@ -91,6 +108,34 @@ def parse_status(raw):
         raise ValueError("Status must be open, in_progress, or resolved.")
 
     return status
+
+
+def parse_author(raw):
+    """Validate a note author label."""
+    author = raw.strip()
+
+    if not author:
+        raise ValueError("Note author cannot be blank.")
+
+    return author
+
+
+def parse_note_message(raw):
+    """Validate a note message length (5-300 characters after trimming)."""
+    message = raw.strip()
+
+    if not 5 <= len(message) <= 300:
+        raise ValueError("Note message must be 5-300 characters.")
+
+    return message
+
+
+def make_filter_parser(valid_options):
+    """Build a parser for an optional filter: blank means 'any'."""
+    def parse(raw):
+        return normalise_choice(raw, valid_options)
+
+    return parse
 
 
 def make_ticket_id_parser(tickets):
@@ -232,6 +277,166 @@ def find_ticket(tickets, ticket_id):
     return None
 
 
+def add_followup_note(tickets):
+    """Add a follow-up note to a ticket using the notes API."""
+    ticket_id = ask("Ticket ID", make_ticket_id_parser(tickets))
+    author = ask("Note author", parse_author)
+    message = ask("Note message (5-300 characters)", parse_note_message)
+
+    try:
+        note = add_note(tickets, ticket_id, author, message)
+        save_tickets(tickets, DATA_FILE)
+
+        print(f"Note {note['note_id']} added to ticket #{ticket_id}.")
+
+    except ValueError as error:
+        print(f"\nError: {error}")
+
+
+def view_ticket_notes(tickets):
+    """Display every note on a ticket in note ID order."""
+    ticket_id = ask("Ticket ID", make_ticket_id_parser(tickets))
+
+    try:
+        notes = get_notes(tickets, ticket_id)
+    except ValueError as error:
+        print(f"\nError: {error}")
+        return
+
+    if not notes:
+        print(f"\nTicket #{ticket_id} has no notes.")
+        return
+
+    print(f"\n--- Notes for ticket #{ticket_id} ---")
+
+    for note in notes:
+        print(f"{note['note_id']} | {note['author']}: {note['message']}")
+
+
+def search_tickets_view(tickets):
+    """Search tickets by title text and optional combined filters (read-only)."""
+    title_text = ask("Title contains (blank for any)", lambda raw: raw.strip())
+    category = ask(
+        "Category filter (" + "/".join(VALID_CATEGORIES) + ", blank for any)",
+        make_filter_parser(VALID_CATEGORIES),
+    )
+    status = ask(
+        "Status filter (" + "/".join(VALID_STATUSES) + ", blank for any)",
+        make_filter_parser(VALID_STATUSES),
+    )
+    priority = ask(
+        "Priority filter (" + "/".join(VALID_PRIORITIES) + ", blank for any)",
+        make_filter_parser(VALID_PRIORITIES),
+    )
+
+    matches = search_tickets(tickets, title_text, category, status, priority)
+
+    if not matches:
+        print("\nNo tickets match those filters.")
+        return
+
+    sort_choice = ask(
+        "Sort results by priority? (y/n, blank for no)",
+        lambda raw: raw.strip().lower(),
+    )
+
+    if sort_choice in ("y", "yes"):
+        matches = sort_by_priority(matches)
+
+    print(f"\n--- Search Results ({len(matches)}) ---")
+
+    for ticket in matches:
+        print(format_ticket_row(ticket))
+
+
+def run_understanding_check():
+    """Run the six-question Engineering Understanding Check."""
+    answers = {}
+
+    print("\n====== Engineering Understanding Check ======")
+    print("Answer each question with A, B, C or D.")
+
+    for number, question in enumerate(QUESTIONS, start=1):
+        print(format_question(question, number, len(QUESTIONS)))
+
+        choice = ask("Your answer", parse_choice)
+        answers[question["id"]] = choice
+
+        if is_correct(question, choice):
+            print("Correct.")
+        else:
+            print(f"Not quite. The expected answer was {question['correct']}.")
+
+    score = score_answers(answers)
+    total = len(QUESTIONS)
+
+    print(f"\nFinal score: {score} / {total}")
+
+    collect_explanations(answers)
+
+    return score
+
+
+def collect_explanations(answers):
+    """Ask for short written explanations of two answers and save them.
+
+    Explanations are stored in a local learning note for mentor discussion.
+    They are never auto-graded, so no keyword matching happens here.
+    """
+    print(
+        "\nPick two questions and explain, in your own words, why the "
+        "correct answer is right (use an example from your code)."
+    )
+
+    valid_ids = [question["id"] for question in QUESTIONS]
+    entries = []
+
+    for round_number in (1, 2):
+        question_id = ask(
+            f"Explanation {round_number} of 2 - which question ("
+            + ", ".join(valid_ids)
+            + ")",
+            lambda raw: parse_question_id(raw, valid_ids),
+        )
+        explanation = ask("Your explanation", parse_explanation)
+        entries.append((question_id, answers[question_id], explanation))
+
+    save_learning_note(entries)
+
+
+def parse_question_id(raw, valid_ids):
+    """Validate a question ID such as Q3 (case-insensitive)."""
+    question_id = raw.strip().upper()
+
+    if question_id not in valid_ids:
+        raise ValueError("Choose one of: " + ", ".join(valid_ids) + ".")
+
+    return question_id
+
+
+def parse_explanation(raw):
+    """Require a real sentence, not a blank or one-word answer."""
+    explanation = raw.strip()
+
+    if len(explanation.split()) < 4:
+        raise ValueError("Please write at least a short sentence.")
+
+    return explanation
+
+
+def save_learning_note(entries, path=LEARNING_NOTE_FILE):
+    """Append the quiz explanations to a local learning note file."""
+    with open(path, "a", encoding="utf-8") as file:
+        file.write("\n## Understanding Check explanations\n")
+
+        for question_id, submitted, explanation in entries:
+            file.write(
+                f"- {question_id} (I answered {submitted}): {explanation}\n"
+            )
+
+    print(f"Saved your explanations to {path} for mentor discussion.")
+
+
 def show_report(tickets):
     """Display ticket counts by status and priority."""
     try:
@@ -248,6 +453,14 @@ def show_report(tickets):
         for priority, count in report["by_priority"].items():
             print(f"  {priority}: {count}")
 
+        print("\nBy category:")
+        for category, count in report["by_category"].items():
+            print(f"  {category}: {count}")
+
+        print(f"\nUnresolved (open + in_progress): {report['unresolved']}")
+        print(f"Resolved: {report['resolved']}")
+        print(f"Resolution rate: {report['resolution_percentage']}%")
+
     except ValueError as error:
         print(f"\nError: {error}")
 
@@ -262,6 +475,10 @@ def display_menu():
     print("5. Assign ticket")
     print("6. Update ticket status")
     print("7. View reports")
+    print("8. Search tickets")
+    print("9. Add follow-up note")
+    print("10. View ticket notes")
+    print("11. Engineering Understanding Check")
     print("0. Exit")
 
 
@@ -294,11 +511,19 @@ def main():
                 change_ticket_status(tickets)
             elif choice == "7":
                 show_report(tickets)
+            elif choice == "8":
+                search_tickets_view(tickets)
+            elif choice == "9":
+                add_followup_note(tickets)
+            elif choice == "10":
+                view_ticket_notes(tickets)
+            elif choice == "11":
+                run_understanding_check()
             elif choice == "0":
                 print("Goodbye!")
                 break
             else:
-                print("Invalid option. Please choose 0–7.")
+                print("Invalid option. Please choose 0–11.")
         except CancelledInput:
             print("\nCancelled. Returning to the main menu.")
         except (EOFError, KeyboardInterrupt):

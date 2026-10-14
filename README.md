@@ -31,6 +31,10 @@ offers this menu:
 5. Assign ticket
 6. Update ticket status
 7. View reports
+8. Search tickets
+9. Add follow-up note
+10. View ticket notes
+11. Engineering Understanding Check
 0. Exit
 
 ## How tickets work
@@ -59,7 +63,40 @@ violations print an error and return you to the menu.
 **Work queue:** shows unresolved tickets (open and in progress) sorted by
 priority, then by ticket ID.
 
-**Reports:** counts of tickets by status and by priority.
+**Search (read-only):** title text (case-insensitive substring) plus optional
+category, status and priority filters. Supplied filters combine with logical
+AND; a blank filter means "do not filter by that field"; an invalid filter
+option re-prompts. Results show ID, title, category, priority, status and
+assignee, and can optionally be sorted by priority then ticket ID. Search never
+modifies tickets. The Open Work Queue (menu 4) is a separate view and is
+unchanged.
+
+**Follow-up notes:** each ticket holds a `notes` list. A note is
+`{"note_id": "N001", "author": ..., "message": ...}` with per-ticket IDs
+`N001`, `N002`, ... Notes can only be added to `open` or `in_progress` tickets;
+the author cannot be blank and the message must be 5-300 characters after
+trimming. A rejected note never consumes an ID, notes survive resolve and
+reopen, and the next note ID continues after a reload.
+
+**Reports:** total tickets; counts by status, priority and category; the
+unresolved count (open + in_progress); the resolved count; and the resolution
+percentage (resolved / total x 100). An empty dataset reports 0% without a
+division error. Each ticket is counted once, by its current status.
+
+**Engineering Understanding Check:** six multiple-choice scenario questions
+about this application's behaviour. Answers must be A, B, C or D (anything else
+re-prompts). One point per correct submitted answer, final score 0-6. You are
+then asked to explain two answers in your own words; explanations are saved to
+`learning-note.md` (gitignored) for mentor discussion and are never
+auto-graded. The question bank (`campusflow/understanding_questions.py`) is
+separate from the scoring logic (`campusflow/understanding_check.py`).
+
+## Data format
+
+`tickets.json` is a JSON list of ticket objects. Each ticket has `id`, `title`,
+`category`, `urgency`, `affected_users`, `priority`, `status`, `assigned_to`
+and, once a note has been added, `notes` (a list of note objects as above).
+Tickets saved before notes existed have no `notes` field and remain valid.
 
 ## Where data lives
 

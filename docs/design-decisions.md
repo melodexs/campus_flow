@@ -104,3 +104,28 @@ boundary, prints the message, and returns to the menu. `EOFError` and
 - Each library module owns one concern: creation/priority (`tickets.py`),
   workflow (`workflow.py`), queue (`queue.py`), reports (`reports.py`),
   persistence (`storage.py`); `main.py` owns all interaction.
+
+## 11. Search, Insights and Understanding Check (Engineer B)
+
+- `search.py` is pure: `search_tickets(tickets, title_text, category, status,
+  priority)` returns a new list and never mutates its input. Filters combine
+  with AND because a staff member narrowing a search expects every added
+  filter to shrink the results, not widen them. Title matching uses
+  `casefold()`, which handles more Unicode cases than `lower()`. Matching is
+  substring-only; there is no fuzzy matching, so `wi-fi` does not match `wifi`.
+- Sorting results uses `(priority rank, numeric ticket ID)`. IDs are compared as
+  integers, so ticket 10 sorts after ticket 2 (text comparison would not).
+- The original Open Work Queue (`queue.py`) is deliberately untouched; the
+  priority-sorted search view is a separate option.
+- `reports.generate_ticket_report` keeps its original keys and adds
+  `by_category`, `unresolved`, `resolved` and `resolution_percentage`. A zero
+  total reports 0.0% instead of dividing by zero.
+- `notes.py` is the interface the CLI calls for notes:
+  `add_note(tickets, ticket_id, author, message)` and
+  `get_notes(tickets, ticket_id)`. Both raise `ValueError` on rejection and
+  validate before mutating, so a rejected action leaves the collection
+  unchanged. A damaged `notes` field is rejected with `ValueError` rather than
+  crashing.
+- The understanding check keeps data (`understanding_questions.py`), scoring
+  (`understanding_check.py`) and interaction (`main.py`) in separate places so
+  scoring is testable without typing.
