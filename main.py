@@ -186,9 +186,15 @@ def view_ticket(tickets):
 def create_new_ticket(tickets):
     """Collect ticket details and create a ticket."""
     title = ask("Ticket title", parse_title)
-    category = ask("Category", parse_category)
-    urgency = ask("Urgency", parse_urgency)
-    affected_users = ask("Number of affected users", parse_affected_users)
+    category = ask(
+        "Category (" + "/".join(VALID_CATEGORIES) + ")",
+        parse_category,
+    )
+    urgency = ask("Urgency (low/medium/high)", parse_urgency)
+    affected_users = ask(
+        "Number of affected users (whole number, at least 1)",
+        parse_affected_users,
+    )
 
     try:
         ticket_id = max(
@@ -256,7 +262,10 @@ def change_ticket_status(tickets):
     """Update the status of an existing ticket."""
     ticket_id = ask("Ticket ID", make_ticket_id_parser(tickets))
     ticket = find_ticket(tickets, ticket_id)
-    new_status = ask("New status", parse_status)
+    new_status = ask(
+        "New status (" + "/".join(VALID_STATUSES) + ")",
+        parse_status,
+    )
 
     try:
         update_ticket_status(ticket, new_status)
