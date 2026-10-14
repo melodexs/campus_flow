@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# CampusFlow ticket data (local runtime state)
+tickets.json

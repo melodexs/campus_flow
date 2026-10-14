@@ -1,4 +1,3 @@
-
 import json
 import tempfile
 import unittest
@@ -31,6 +30,22 @@ class TestTicketStorage(unittest.TestCase):
     def test_save_tickets_creates_json_file(self):
         save_tickets(self.tickets, self.filepath)
         self.assertTrue(self.filepath.exists())
+
+    def test_saved_file_ends_with_newline(self):
+        save_tickets(self.tickets, self.filepath)
+
+        contents = self.filepath.read_text(encoding="utf-8")
+        self.assertTrue(contents.endswith("\n"))
+
+    def test_save_creates_missing_parent_folder(self):
+        nested_path = (
+            Path(self.temp_dir.name) / "data" / "tickets.json"
+        )
+
+        save_tickets(self.tickets, nested_path)
+
+        self.assertTrue(nested_path.exists())
+        self.assertEqual(load_tickets(nested_path), self.tickets)
 
     def test_load_tickets_returns_saved_tickets(self):
         save_tickets(self.tickets, self.filepath)

@@ -33,9 +33,11 @@ def save_tickets(tickets, filename="tickets.json"):
     """Validate and save tickets to a JSON file."""
     validate_tickets(tickets)
     path = Path(filename)
+    path.parent.mkdir(parents=True, exist_ok=True)
 
     with path.open("w", encoding="utf-8") as file:
         json.dump(tickets, file, indent=4)
+        file.write("\n")
 
 
 def load_tickets(filename="tickets.json"):
