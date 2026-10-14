@@ -57,6 +57,7 @@ class TestCreateTicket(unittest.TestCase):
         self.assertEqual(ticket["priority"], "critical")
         self.assertEqual(ticket["status"], "open")
         self.assertIsNone(ticket["assigned_to"])
+        self.assertEqual(ticket["notes"], [])
 
     def test_strips_extra_spaces_from_title(self):
         ticket = create_ticket(
