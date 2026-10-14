@@ -50,8 +50,15 @@ class TestScoring(unittest.TestCase):
 
     def test_one_point_per_correct_answer(self):
         answers = self.all_correct()
-        answers["Q1"] = "A"
-        answers["Q4"] = "A"
+
+        # Force exactly two questions wrong, without depending on which
+        # letter is correct for any question.
+        for question in QUESTIONS[:2]:
+            wrong = next(
+                letter for letter in VALID_CHOICES
+                if letter != question["correct"]
+            )
+            answers[question["id"]] = wrong
 
         self.assertEqual(score_answers(answers), 4)
 
