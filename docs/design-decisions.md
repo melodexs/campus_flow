@@ -59,13 +59,18 @@ Assignment is required before a ticket can move to `in_progress`.
 
 ## 6. Work Queue
 
-`get_work_queue` in `queue.py` currently includes every ticket whose status
-is not `resolved` — that is, `open` AND `in_progress` — sorted by priority
-(critical first) and then by ticket ID. Inputs are validated: each ticket
-must be a dictionary with a valid priority, status and positive integer ID.
+`get_work_queue` in `queue.py` includes tickets whose status is `open` ONLY —
+in-progress and resolved tickets are excluded — sorted by priority (critical
+first) and then by ticket ID. Inputs are validated: each ticket must be a
+dictionary with a valid priority, status and positive integer ID, and
+in-progress tickets present in the collection are still validated even though
+they are not queued.
 
-Planned change (CampusFlow Next sprint): the queue will show open tickets
-only. Until that lands, the behaviour above is what runs.
+History: before CampusFlow Next, the queue included every unresolved ticket
+(open and in-progress). The sprint brief requires open tickets only, so this
+was corrected with a targeted regression test; see PR for
+`fix/open-work-queue`. In-progress work is visible via Search (menu 8) with
+the status filter, and in the Reports counts.
 
 ## 7. JSON Persistence
 

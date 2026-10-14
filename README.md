@@ -60,8 +60,9 @@ in progress before it can be resolved. A resolved ticket has to be reopened
 (status `open`) before anything else can change on it. Workflow-rule
 violations print an error and return you to the menu.
 
-**Work queue:** shows unresolved tickets (open and in progress) sorted by
-priority, then by ticket ID.
+**Work queue:** shows OPEN tickets only (in-progress and resolved tickets
+are excluded), sorted by priority, then by ticket ID. Use Search to find
+in-progress work.
 
 **Search (read-only):** title text (case-insensitive substring) plus optional
 category, status and priority filters. Supplied filters combine with logical
