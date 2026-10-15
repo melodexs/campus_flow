@@ -38,6 +38,13 @@ class TestTicketAssignment(unittest.TestCase):
 
         self.assertEqual(self.ticket, original_ticket)
 
+    def test_rejects_non_string_staff_name_without_changing_ticket(self):
+        original_ticket = self.ticket.copy()
+
+        with self.assertRaises(ValueError):
+            assign_ticket(self.ticket, 123)
+
+        self.assertEqual(self.ticket, original_ticket)
 
 class TestTicketWorkflow(unittest.TestCase):
 
@@ -96,6 +103,13 @@ class TestTicketWorkflow(unittest.TestCase):
 
         self.assertEqual(self.ticket, original_ticket)
 
+    def test_rejects_non_string_status_without_changing_ticket(self):
+        original_ticket = self.ticket.copy()
+
+        with self.assertRaises(ValueError):
+            update_ticket_status(self.ticket, None)
+
+        self.assertEqual(self.ticket, original_ticket)
 
 if __name__ == "__main__":
     unittest.main()
