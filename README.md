@@ -124,8 +124,11 @@ python3 -m unittest discover -s tests -v
 ## Team and Contributions
 
 - **Partner A — ticket creation, validation and priority engine:**
-  Okoh Destiny (melodexs). PR: [PLACEHOLDER — link to Partner A's PR]
+  Okoh Destiny (melodexs). PR: #13 (retry-on-invalid-input),
+  #17 (validation and notes), #18 (choice hints), #19 (quiz revision)
 - **Partner B — workflow, work queue, reports and storage:**
-  Michael Oogwu (dab00gieman). PR: [PLACEHOLDER — link to Partner B's PR]
+  Michael Oogwu (dab00gieman). PR: #14 (docs and storage polish),
+  #15 (search, insights and understanding check), #16 (open work queue),
+  #20 (question polish)
 
 Each partner keeps their own entries in `docs/ai-learning-log.md`.
