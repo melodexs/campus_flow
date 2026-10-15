@@ -82,6 +82,13 @@ clear `ValueError` when the JSON is malformed or fails validation (not a
 list, non-dictionary entries, invalid or duplicate IDs). The data file is
 gitignored; it is local runtime state.
 
+Saved notes are validated with the same depth as tickets: every note entry
+must be a dictionary with a `note_id` in `N###` form that is unique within
+the ticket, a non-blank `author`, and a text `message` within the 5-300
+character limits enforced by the notes module. A ticket saved before notes
+existed may omit the `notes` field; it is accepted as empty, matching the
+notes module's own rule, so old files still load.
+
 ## 8. Testing
 
 Run the suite from the project root:
