@@ -27,3 +27,39 @@ These are the results of the current `main` test suite. The original audited com
 
 ## Next action
 Identify the audited commit, verify the original baseline where available, and then implement the agreed feature issues on separate branches.
+
+
+
+# CampusFlow Baseline Check
+
+## Test Results
+
+- Branch: main
+- Test command: `python3 -m unittest discover -s tests -v`
+- Total tests: 52
+- Passed: 52
+- Failed: 0
+- Result: OK
+
+## Existing Features Verified by Tests
+
+1. Ticket creation and priority calculation.
+2. Ticket assignment and status transitions.
+3. Work queue sorting and filtering.
+4. Ticket reports.
+5. JSON ticket storage and loading.
+6. CLI ticket viewing and clean EOF handling.
+
+## Manual Checks
+
+Record three application inputs or actions tested manually,
+along with their expected and actual results.
+
+## Improvements Required by CampusFlow Next
+
+1. Centralize and strengthen ticket validation.
+2. Prevent invalid operations from modifying ticket data.
+3. Add ticket follow-up notes with persistent note IDs.
+4. Strengthen JSON validation and preserve existing memory
+   if loading invalid data fails.
+5. Ensure ticket and note IDs remain unique after reloading.
