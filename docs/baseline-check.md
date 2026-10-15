@@ -22,8 +22,16 @@
 - Existing workflow tests cover starting work without assignment and valid resolve/reopen transitions.
 - Existing storage tests cover missing files, malformed JSON and loading saved tickets.
 
-## Limitations
-These are the results of the current `main` test suite. The original audited commit and three manual CLI input/output checks still need to be identified or completed.
+## Sprint outcome (update, 2026-10-15)
 
-## Next action
-Identify the audited commit, verify the original baseline where available, and then implement the agreed feature issues on separate branches.
+All agreed feature issues were implemented on separate branches and merged
+to `main` (PRs #13 through #22): retry-on-invalid-input, docs and storage
+polish, deep validation and notes, search/insights and the understanding
+check, choice hints, and the open-only work queue correction.
+
+- Tests now: 170 (was 52 at baseline), all passing
+- The baseline observations above are kept as the historical record of
+  the starting point; item 2 (work queue regression) and item 3 (notes,
+  combined search filters, JSON validation, ID continuity) are resolved.
+- The original audited commit could not be identified; the recorded
+  baseline test count of 52 stands as the reference.
