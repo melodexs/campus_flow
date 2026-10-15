@@ -113,6 +113,7 @@ class TestTicketStorage(unittest.TestCase):
             save_tickets(invalid_tickets, self.filepath)
 
         updated_content = self.filepath.read_text(encoding="utf-8")
+
         self.assertEqual(updated_content, original_content)
 
     def test_rejects_invalid_note_when_loading(self):
@@ -136,6 +137,37 @@ class TestTicketStorage(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "author"):
             load_tickets(self.filepath)
+
+    def test_note_id_continuity_after_reload(self):
+        from campusflow.notes import add_note
+
+        self.tickets[0]["notes"] = [
+            {
+                "note_id": "N001",
+                "author": "Ada",
+                "message": "Initial router check.",
+            },
+            {
+                "note_id": "N003",
+                "author": "Chidi",
+                "message": "Replacement router ordered.",
+            },
+        ]
+
+        save_tickets(self.tickets, self.filepath)
+
+        loaded_tickets = load_tickets(self.filepath)
+        ticket = loaded_tickets[0]
+
+        note = add_note(
+            ticket,
+            "Ada",
+            "Router replacement completed.",
+        )
+
+        self.assertEqual(note["note_id"], "N004")
+        self.assertEqual(len(ticket["notes"]), 3)
+
 
 if __name__ == "__main__":
     unittest.main()
