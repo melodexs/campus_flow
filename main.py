@@ -1,4 +1,5 @@
 from campusflow.notes import add_note, get_notes
+from campusflow.recommend_staff import recommend_staff
 from campusflow.queue import get_work_queue
 from campusflow.reports import generate_ticket_report
 from campusflow.search import (
@@ -214,6 +215,11 @@ def create_new_ticket(tickets):
         save_tickets(tickets, DATA_FILE)
 
         print(f"\nTicket #{ticket_id} created successfully.")
+        recommendations = recommend_staff(category)
+
+        print("\nRecommended staff for this category:")
+        for staff_member in recommendations:
+            print(f"  - {staff_member}")
 
     except ValueError as error:
         print(f"\nError: {error}")
